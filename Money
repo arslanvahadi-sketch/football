@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Win $100</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #09090b;
+  color: #fff;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0; left: 0;
+  padding: 24px;
+  z-index: 1;
+}
+
+.screen.active {
+  display: flex;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Background glow */
+.bg-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow1 { background: #f59e0b; top: -100px; left: -100px; }
+.glow2 { background: #f59e0b; bottom: -100px; right: -100px; }
+
+/* ===== SCREEN 1 - WELCOME ===== */
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.welcome-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f59e0b, #d97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  margin-bottom: 32px;
+  position: relative;
+  box-shadow: 0 0 60px rgba(245,158,11,0.3), 0 0 120px rgba(245,158,11,0.1);
+}
+
+.welcome-icon::before {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid rgba(245,158,11,0.15);
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0; }
+}
+
+.welcome-title {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.welcome-title span {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome-sub {
+  font-size: 15px;
+  color: #71717a;
+  text-align: center;
+  margin-bottom: 48px;
+  line-height: 1.5;
+}
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.btn {
+  border: none;
+  border-radius: 16px;
+  padding: 18px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+  box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+}
+
+.btn-gold:active {
+  box-shadow: 0 2px 12px rgba(245,158,11,0.4);
+}
+
+.btn-gold::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,0.05);
+  color: #71717a;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ===== SCREEN 2 - POOR ===== */
+.poor-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.poor-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.poor-text {
+  font-size: 15px;
+  color: #71717a;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 40px;
+  max-width: 300px;
+}
+
+/* ===== SCREEN 3 - CLICKER ===== */
+#screen3 {
+  justify-content: flex-start;
+  padding-top: 0;
+}
+
+.top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px;
+  margin-bottom: 20px;
+}
+
+.top-label {
+  font-size: 13px;
+  color: #71717a;
+  font-weight: 500;
+}
+
+.balance-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 10px 18px;
+}
+
+.balance-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34,197,94,0.5);
+}
+
+.balance-amount {
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.clicker-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.click-label {
+  font-size: 14px;
+  color: #52525b;
+  font-weight: 500;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.coin-btn {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  background: linear-gradient(145deg, #fbbf24, #d97706);
+  box-shadow: 0 8px 40px rgba(245,158,11,0.3), 0 0 80px rgba(245,158,11,0.1), inset 0 -4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.coin-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 4px 20px rgba(245,158,11,0.4), inset 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.coin-inner {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.6);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.click-counter {
+  margin-top: 24px;
+  font-size: 13px;
+  color: #3f3f46;
+  font-weight: 500;
+}
+
+.click-counter b {
+  color: #71717a;
+}
+
+.milestone-msg {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f59e0b;
+  text-align: center;
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Float +$100 */
+.float-text {
+  position: absolute;
+  font-size: 20px;
+  font-weight: 800;
+  color: #22c55e;
+  pointer-events: none;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 10;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-120px) scale(0.7); }
+}
+
+/* Confetti */
+.confetti-piece {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Bottom stats */
+.bottom-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #52525b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* ===== SCREEN 4 - MILESTONE ===== */
+.milestone-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.milestone-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.milestone-text {
+  font-size: 15px;
+  color: #a1a1aa;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 14px;
+  padding: 14px 32px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:active {
+  background: rgba(245,158,11,0.1);
+  transform: scale(0.97);
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow glow1"></div>
+<div class="bg-glow glow2"></div>
+
+<!-- SCREEN 1: Welcome -->
+<div class="screen active" id="screen1">
+  <div class="welcome-badge">Limited Time Offer</div>
+  <div class="welcome-icon">$</div>
+  <h1 class="welcome-title">Welcome!<br>You Can Now Win <span>$100</span></h1>
+  <p class="welcome-sub">Tap below to claim your reward<br>or walk away empty-handed.</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="showScreen('screen3')">Give Me The $100!</button>
+    <button class="btn btn-ghost" onclick="showScreen('screen2')">Nah, I'll Stay Poor</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: Poor choice -->
+<div class="screen" id="screen2">
+  <div class="poor-icon">:(</div>
+  <h2 class="poor-title">Seriously?!</h2>
+  <p class="poor-text">You just turned down free money. That's a bold strategy. Let's see if it pays off... (it won't)</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="showScreen('screen1')">Wait, Take Me Back!</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: Clicker -->
+<div class="screen" id="screen3">
+  <div class="top-bar">
+    <span class="top-label">Your Wallet</span>
+    <div class="balance-box">
+      <div class="balance-dot"></div>
+      <span class="balance-amount" id="balanceDisplay">$0</span>
+    </div>
+  </div>
+
+  <div class="clicker-area" id="clickerArea">
+    <div class="click-label">Tap The Coin</div>
+    <button class="coin-btn" id="coinBtn" onclick="handleClick(event)">
+      <div class="coin-inner">$</div>
+    </button>
+    <div class="click-counter">Taps: <b id="clickCount">0</b></div>
+    <div class="milestone-msg" id="milestoneMsg"></div>
+  </div>
+
+  <div class="bottom-stats">
+    <div class="stat-card">
+      <div class="stat-val" id="totalEarned">$0</div>
+      <div class="stat-label">Total Earned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="perClick">$100</div>
+      <div class="stat-label">Per Click</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let balance = 0;
+let clicks = 0;
+let milestoneShown = {};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  setTimeout(() => {
+    document.getElementById(id).classList.add('active');
+  }, 50);
+}
+
+function handleClick(e) {
+  clicks++;
+  balance += 100;
+
+  // Update displays
+  document.getElementById('balanceDisplay').textContent = '$' + balance.toLocaleString();
+  document.getElementById('clickCount').textContent = clicks;
+  document.getElementById('totalEarned').textContent = '$' + balance.toLocaleString();
+
+  // Float +$100
+  let floater = document.createElement('div');
+  floater.className = 'float-text';
+  floater.textContent = '+$100';
+  let rect = document.getElementById('coinBtn').getBoundingClientRect();
+  let offsetX = (Math.random() - 0.5) * 80;
+  floater.style.left = (rect.left + rect.width / 2 - 30 + offsetX) + 'px';
+  floater.style.top = (rect.top - 10) + 'px';
+  document.body.appendChild(floater);
+  setTimeout(() => floater.remove(), 1000);
+
+  // Milestone messages
+  let msg = '';
+  if (balance >= 100000) msg = 'You are a millionaire in training!';
+  else if (balance >= 50000) msg = 'Jeff Bezos is watching...';
+  else if (balance >= 25000) msg = 'Bank account overflow incoming!';
+  else if (balance >= 10000) msg = 'You are officially rich!';
+  else if (balance >= 5000) msg = 'Money machine activated!';
+  else if (balance >= 2000) msg = 'Stacking bills like a pro!';
+  else if (balance >= 1000) msg = 'Not bad at all!';
+  else if (balance >= 500) msg = 'Getting warmer...';
+  else if (balance >= 100) msg = 'First $100 earned!';
+
+  document.getElementById('milestoneMsg').textContent = msg;
+
+  // Confetti at milestones
+  let milestones = [1000, 5000, 10000, 25000, 50000, 100000];
+  milestones.forEach(m => {
+    if (balance >= m && !milestoneShown[m]) {
+      milestoneShown[m] = true;
+      launchConfetti();
+    }
+  });
+}
+
+function launchConfetti() {
+  let colors = ['#f59e0b', '#fbbf24', '#22c55e', '#3b82f6', '#ef4444', '#a855f7'];
+  for (let i = 0; i < 60; i++) {
+    let piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-10px';
+    piece.style.width = (Math.random() * 8 + 4) + 'px';
+    piece.style.height = (Math.random() * 8 + 4) + 'px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animation = 'confettiFall ' + (Math.random() * 2 + 1.5) + 's ease-out forwards';
+    piece.style.animationDelay = Math.random() * 0.5 + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
+  }
+}
+</script>
+</body>
+</html>
