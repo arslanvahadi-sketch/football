@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Team Quiz</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: #0a0a0a;
+  color: white;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0; left: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  padding: 20px;
+}
+
+.screen.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* SCREEN 1 - Entry */
+#screen1 {
+  background: linear-gradient(135deg, #0a0a0a 0%, #0d1b0a 50%, #0a0a0a 100%);
+  cursor: pointer;
+}
+
+.football-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a3a1a, #2d5a2d);
+  border: 3px solid rgba(100,255,100,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 50px;
+  margin-bottom: 30px;
+  animation: pulse-ball 2s ease-in-out infinite;
+  position: relative;
+}
+
+.football-icon::after {
+  content: '';
+  position: absolute;
+  top: -12px; left: -12px; right: -12px; bottom: -12px;
+  border-radius: 50%;
+  border: 2px solid rgba(100,255,100,0.1);
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ball {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+.entry-title {
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.entry-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 3px;
+}
+
+.click-hint {
+  position: absolute;
+  bottom: 40px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 2px;
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+
+/* SCREEN 2 - Team Selection */
+#screen2 {
+  background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
+  overflow-y: auto;
+}
+
+.hint-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: #ffd700;
+  max-width: 220px;
+  text-align: right;
+  z-index: 10;
+  display: none;
+}
+
+.hint-box.show { display: block; }
+
+.hint-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #ffd700;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: blink 1s ease-in-out infinite;
+}
+
+.question-text {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f5f5f5, #c0c0c0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+
+.question-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.teams-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.team-btn {
+  padding: 16px 24px;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.team-btn:hover {
+  transform: translateY(-3px);
+}
+
+.team-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Barcelona */
+.btn-barca {
+  background: linear-gradient(135deg, #1a0a2e, #2d1040);
+  color: #ff6b8a;
+  border: 1px solid rgba(164,30,53,0.3);
+}
+.btn-barca:hover {
+  box-shadow: 0 10px 30px rgba(164,30,53,0.3);
+  border-color: rgba(164,30,53,0.6);
+}
+.logo-barca { background: linear-gradient(135deg, #A41E35, #004D98); color: white; }
+
+/* Real Madrid */
+.btn-real {
+  background: linear-gradient(135deg, #1a1a2e, #2e2e40);
+  color: #e0d5f5;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.btn-real:hover {
+  box-shadow: 0 10px 30px rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+}
+.logo-real { background: linear-gradient(135deg, #FEBE10, #ffffff); color: #1a1a2e; }
+
+/* PSG */
+.btn-psg {
+  background: linear-gradient(135deg, #0a0a2e, #101850);
+  color: #6b8aff;
+  border: 1px solid rgba(0,45,98,0.4);
+}
+.btn-psg:hover {
+  box-shadow: 0 10px 30px rgba(0,45,98,0.3);
+  border-color: rgba(0,45,98,0.6);
+}
+.logo-psg { background: linear-gradient(135deg, #004170, #DA291C); color: white; }
+
+/* Man City */
+.btn-city {
+  background: linear-gradient(135deg, #0a1a2e, #102040);
+  color: #6bc5ff;
+  border: 1px solid rgba(108,171,221,0.3);
+}
+.btn-city:hover {
+  box-shadow: 0 10px 30px rgba(108,171,221,0.2);
+  border-color: rgba(108,171,221,0.5);
+}
+.logo-city { background: linear-gradient(135deg, #6CABDD, #1C2C5B); color: white; }
+
+/* Arsenal */
+.btn-arsenal {
+  background: linear-gradient(135deg, #2e0a0a, #401010);
+  color: #ff6b6b;
+  border: 1px solid rgba(239,1,7,0.3);
+}
+.btn-arsenal:hover {
+  box-shadow: 0 10px 30px rgba(239,1,7,0.2);
+  border-color: rgba(239,1,7,0.5);
+}
+.logo-arsenal { background: linear-gradient(135deg, #EF0107, #9C824A); color: white; }
+
+/* RESULT SCREENS */
+.result-screen-bad {
+  background: linear-gradient(160deg, #1a0000 0%, #2d0a0a 40%, #0a0a0a 100%);
+}
+
+.result-screen-good {
+  background: linear-gradient(160deg, #001a0a 0%, #0a2d1a 40%, #0a0a0a 100%);
+}
+
+.result-screen-barca {
+  background: linear-gradient(160deg, #1a0a2e 0%, #0a1540 40%, #0a0a0a 100%);
+  overflow-y: auto;
+}
+
+.result-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 25px;
+}
+
+.icon-bad {
+  background: rgba(255,50,50,0.1);
+  border: 2px solid rgba(255,50,50,0.3);
+  color: #ff3232;
+}
+
+.icon-great {
+  background: rgba(164,30,53,0.15);
+  border: 2px solid rgba(164,30,53,0.4);
+  color: #ff6b8a;
+}
+
+.result-title {
+  font-size: 42px;
+  font-weight: 900;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.text-red {
+  background: linear-gradient(135deg, #ff3232, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shake 0.5s ease-in-out;
+}
+
+.text-gold {
+  background: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
+}
+
+.result-msg {
+  font-size: 15px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 35px;
+  font-weight: 300;
+  text-align: center;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.players-section {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.players-label {
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  margin-bottom: 20px;
+}
+
+.players-grid {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 500px;
+}
+
+.player-card {
+  width: 90px;
+  text-align: center;
+}
+
+.player-img {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(164,30,53,0.4);
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.05);
+}
+
+.player-name {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 600;
+}
+
+.player-pos {
+  font-size: 9px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 1px;
+}
+
+.btn-again {
+  padding: 14px 40px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.5);
+  border-radius: 50px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 2px;
+}
+
+.btn-again:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Particles */
+.particles {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  animation: float-up linear infinite;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* Confetti */
+.confetti-piece {
+  position: absolute;
+  width: 8px; height: 12px;
+  border-radius: 2px;
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Screen 1: Entry -->
+<div id="screen1" class="screen active" onclick="goTo('screen2')">
+  <div class="particles" id="particles1"></div>
+  <div class="football-icon">&#9917;</div>
+  <div class="entry-title">Football Team Quiz</div>
+  <div class="entry-sub">Which team do you support?</div>
+  <div class="click-hint">TAP ANYWHERE TO ENTER</div>
+</div>
+
+<!-- Screen 2: Team Selection -->
+<div id="screen2" class="screen">
+  <div class="particles" id="particles2"></div>
+  <div class="hint-box" id="hintBox">
+    <span class="hint-dot"></span>
+    Hint: We know you know it's Barca... come on!
+  </div>
+  <div class="question-text">Which Football Team Do You Support?</div>
+  <div class="question-sub">Choose wisely...</div>
+  <div class="teams-grid">
+    <button class="team-btn btn-barca" onclick="goTo('screenBarca')">
+      <div class="team-logo logo-barca">FC</div>
+      FC Barcelona
+    </button>
+    <button class="team-btn btn-real" onclick="goTo('screenReal')">
+      <div class="team-logo logo-real">RM</div>
+      Real Madrid
+    </button>
+    <button class="team-btn btn-psg" onclick="goTo('screenPSG')">
+      <div class="team-logo logo-psg">PS</div>
+      PSG
+    </button>
+    <button class="team-btn btn-city" onclick="goTo('screenCity')">
+      <div class="team-logo logo-city">MC</div>
+      Manchester City
+    </button>
+    <button class="team-btn btn-arsenal" onclick="goTo('screenArsenal')">
+      <div class="team-logo logo-arsenal">AR</div>
+      Arsenal
+    </button>
+  </div>
+</div>
+
+<!-- Result: Barcelona -->
+<div id="screenBarca" class="screen result-screen-barca">
+  <div class="particles" id="particlesBarca"></div>
+  <div class="result-icon icon-great">&#9733;</div>
+  <div class="result-title text-gold">Congratulations!</div>
+  <div class="result-msg">You support the best team in the world. Not only a team, but a family. Mes que un club!</div>
+  <div class="players-section">
+    <div class="players-label">THE LEGENDS</div>
+    <div class="players-grid">
+      <div class="player-card">
+        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/571398-1710080339.jpg" alt="Lamine Yamal">
+        <div class="player-name">Lamine Yamal</div>
+        <div class="player-pos">FORWARD</div>
+      </div>
+      <div class="player-card">
+        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/411295-1694609987.jpg" alt="Raphinha">
+        <div class="player-name">Raphinha</div>
+        <div class="player-pos">FORWARD</div>
+      </div>
+      <div class="player-card">
+        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/38253-1710080469.jpg" alt="Lewandowski">
+        <div class="player-name">Lewandowski</div>
+        <div class="player-pos">STRIKER</div>
+      </div>
+      <div class="player-card">
+        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/901307-1710080519.jpg" alt="Pedri">
+        <div class="player-name">Pedri</div>
+        <div class="player-pos">MIDFIELDER</div>
+      </div>
+      <div class="player-card">
+        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/466794-1710080549.jpg" alt="Gavi">
+        <div class="player-name">Gavi</div>
+        <div class="player-pos">MIDFIELDER</div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+</div>
+
+<!-- Result: Real Madrid -->
+<div id="screenReal" class="screen result-screen-bad">
+  <div class="result-icon icon-bad">X</div>
+  <div class="result-title text-red">Go Away!</div>
+  <div class="result-msg">Barca is better. You know it, we know it, everyone knows it. Go away!</div>
+  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+</div>
+
+<!-- Result: PSG -->
+<div id="screenPSG" class="screen result-screen-bad">
+  <div class="result-icon icon-bad">X</div>
+  <div class="result-title text-red">Come On Man...</div>
+  <div class="result-msg">Don't glaze 1 UCL trophy. That's embarrassing. Pick a real team!</div>
+  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+</div>
+
+<!-- Result: Man City -->
+<div id="screenCity" class="screen result-screen-bad">
+  <div class="result-icon icon-bad">X</div>
+  <div class="result-title text-red">Bruh...</div>
+  <div class="result-msg">You got beaten by Real Madrid... bruh! Oil money can't buy you glory!</div>
+  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+</div>
+
+<!-- Result: Arsenal -->
+<div id="screenArsenal" class="screen result-screen-bad">
+  <div class="result-icon icon-bad">X</div>
+  <div class="result-title text-red">WTF?!</div>
+  <div class="result-msg">Who even supports this team?! Seriously, what are you doing with your life?!</div>
+  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+</div>
+
+<script>
+function goTo(id) {
+  // Hide hint when leaving screen2
+  var hint = document.getElementById('hintBox');
+  hint.classList.remove('show');
+
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].style.opacity = '0';
+    (function(s) {
+      setTimeout(function() { s.classList.remove('active'); }, 400);
+    })(screens[i]);
+  }
+  setTimeout(function() {
+    var target = document.getElementById(id);
+    target.classList.add('active');
+    setTimeout(function() {
+      target.style.opacity = '1';
+    }, 50);
+
+    // Show hint on screen2
+    if (id === 'screen2') {
+      setTimeout(function() {
+        hint.classList.add('show');
+      }, 600);
+    }
+
+    // Confetti for Barca
+    if (id === 'screenBarca') {
+      launchConfetti('screenBarca');
+    }
+  }, 450);
+}
+
+// Floating particles
+function createParticles(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  for (var i = 0; i < 20; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (5 + Math.random() * 10) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    p.style.width = (2 + Math.random() * 3) + 'px';
+    p.style.height = p.style.width;
+    container.appendChild(p);
+  }
+}
+
+createParticles('particles1');
+createParticles('particles2');
+createParticles('particlesBarca');
+
+function launchConfetti(screenId) {
+  var colors = ['#A41E35','#004D98','#ffd700','#ff6bb5','#6b9fff','#ff9f43'];
+  var screen = document.getElementById(screenId);
+  for (var i = 0; i < 60; i++) {
+    var c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = (Math.random() * 2) + 's';
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    screen.appendChild(c);
+    (function(el) {
+      setTimeout(function() { el.remove(); }, 5000);
+    })(c);
+  }
+}
+</script>
+
+</body>
+</html>
