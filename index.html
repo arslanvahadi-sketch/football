@@ -2,633 +2,563 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Football Team Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Win $100</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
-  font-family: 'Poppins', Arial, sans-serif;
-  background: #0a0a0a;
-  color: white;
-  height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #09090b;
+  color: #fff;
+  height: 100dvh;
+  width: 100vw;
   overflow: hidden;
+  position: relative;
 }
 
 .screen {
   display: none;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: absolute;
   top: 0; left: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  padding: 20px;
+  padding: 24px;
+  z-index: 1;
 }
 
 .screen.active {
   display: flex;
-  opacity: 1;
+  animation: fadeIn 0.5s ease forwards;
 }
 
-/* SCREEN 1 - Entry */
-#screen1 {
-  background: linear-gradient(135deg, #0a0a0a 0%, #0d1b0a 50%, #0a0a0a 100%);
-  cursor: pointer;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.football-icon {
-  width: 100px;
-  height: 100px;
+/* Background glow */
+.bg-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a3a1a, #2d5a2d);
-  border: 3px solid rgba(100,255,100,0.2);
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow1 { background: #f59e0b; top: -100px; left: -100px; }
+.glow2 { background: #f59e0b; bottom: -100px; right: -100px; }
+
+/* ===== SCREEN 1 - WELCOME ===== */
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.welcome-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f59e0b, #d97706);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 50px;
-  margin-bottom: 30px;
-  animation: pulse-ball 2s ease-in-out infinite;
+  font-size: 56px;
+  margin-bottom: 32px;
   position: relative;
+  box-shadow: 0 0 60px rgba(245,158,11,0.3), 0 0 120px rgba(245,158,11,0.1);
 }
 
-.football-icon::after {
+.welcome-icon::before {
   content: '';
   position: absolute;
-  top: -12px; left: -12px; right: -12px; bottom: -12px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  border: 2px solid rgba(100,255,100,0.1);
+  border: 2px solid rgba(245,158,11,0.15);
   animation: pulse-ring 2s ease-in-out infinite;
 }
 
-@keyframes pulse-ball {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
 @keyframes pulse-ring {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.7; }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0; }
 }
 
-.entry-title {
-  font-size: 20px;
-  font-weight: 300;
-  letter-spacing: 6px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.entry-sub {
-  font-size: 13px;
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 3px;
-}
-
-.click-hint {
-  position: absolute;
-  bottom: 40px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 2px;
-  animation: blink 2s ease-in-out infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.6; }
-}
-
-/* SCREEN 2 - Team Selection */
-#screen2 {
-  background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
-  overflow-y: auto;
-}
-
-.hint-box {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(255,215,0,0.08);
-  border: 1px solid rgba(255,215,0,0.2);
-  border-radius: 12px;
-  padding: 10px 16px;
-  font-size: 12px;
-  color: #ffd700;
-  max-width: 220px;
-  text-align: right;
-  z-index: 10;
-  display: none;
-}
-
-.hint-box.show { display: block; }
-
-.hint-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: #ffd700;
-  border-radius: 50%;
-  margin-right: 6px;
-  animation: blink 1s ease-in-out infinite;
-}
-
-.question-text {
-  font-size: 36px;
+.welcome-title {
+  font-size: 28px;
   font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #f5f5f5, #c0c0c0);
+}
+
+.welcome-title span {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
+}
+
+.welcome-sub {
+  font-size: 15px;
+  color: #71717a;
   text-align: center;
+  margin-bottom: 48px;
+  line-height: 1.5;
 }
 
-.question-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.3);
-  margin-bottom: 40px;
-  font-weight: 300;
-}
-
-.teams-grid {
+.btn-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  max-width: 380px;
+  max-width: 340px;
 }
 
-.team-btn {
-  padding: 16px 24px;
+.btn {
   border: none;
-  border-radius: 14px;
-  font-family: 'Poppins', Arial, sans-serif;
+  border-radius: 16px;
+  padding: 18px 24px;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-}
-
-.team-btn:hover {
-  transform: translateY(-3px);
-}
-
-.team-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-/* Barcelona */
-.btn-barca {
-  background: linear-gradient(135deg, #1a0a2e, #2d1040);
-  color: #ff6b8a;
-  border: 1px solid rgba(164,30,53,0.3);
-}
-.btn-barca:hover {
-  box-shadow: 0 10px 30px rgba(164,30,53,0.3);
-  border-color: rgba(164,30,53,0.6);
-}
-.logo-barca { background: linear-gradient(135deg, #A41E35, #004D98); color: white; }
-
-/* Real Madrid */
-.btn-real {
-  background: linear-gradient(135deg, #1a1a2e, #2e2e40);
-  color: #e0d5f5;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.btn-real:hover {
-  box-shadow: 0 10px 30px rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.3);
-}
-.logo-real { background: linear-gradient(135deg, #FEBE10, #ffffff); color: #1a1a2e; }
-
-/* PSG */
-.btn-psg {
-  background: linear-gradient(135deg, #0a0a2e, #101850);
-  color: #6b8aff;
-  border: 1px solid rgba(0,45,98,0.4);
-}
-.btn-psg:hover {
-  box-shadow: 0 10px 30px rgba(0,45,98,0.3);
-  border-color: rgba(0,45,98,0.6);
-}
-.logo-psg { background: linear-gradient(135deg, #004170, #DA291C); color: white; }
-
-/* Man City */
-.btn-city {
-  background: linear-gradient(135deg, #0a1a2e, #102040);
-  color: #6bc5ff;
-  border: 1px solid rgba(108,171,221,0.3);
-}
-.btn-city:hover {
-  box-shadow: 0 10px 30px rgba(108,171,221,0.2);
-  border-color: rgba(108,171,221,0.5);
-}
-.logo-city { background: linear-gradient(135deg, #6CABDD, #1C2C5B); color: white; }
-
-/* Arsenal */
-.btn-arsenal {
-  background: linear-gradient(135deg, #2e0a0a, #401010);
-  color: #ff6b6b;
-  border: 1px solid rgba(239,1,7,0.3);
-}
-.btn-arsenal:hover {
-  box-shadow: 0 10px 30px rgba(239,1,7,0.2);
-  border-color: rgba(239,1,7,0.5);
-}
-.logo-arsenal { background: linear-gradient(135deg, #EF0107, #9C824A); color: white; }
-
-/* RESULT SCREENS */
-.result-screen-bad {
-  background: linear-gradient(160deg, #1a0000 0%, #2d0a0a 40%, #0a0a0a 100%);
-}
-
-.result-screen-good {
-  background: linear-gradient(160deg, #001a0a 0%, #0a2d1a 40%, #0a0a0a 100%);
-}
-
-.result-screen-barca {
-  background: linear-gradient(160deg, #1a0a2e 0%, #0a1540 40%, #0a0a0a 100%);
-  overflow-y: auto;
-}
-
-.result-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  margin-bottom: 25px;
-}
-
-.icon-bad {
-  background: rgba(255,50,50,0.1);
-  border: 2px solid rgba(255,50,50,0.3);
-  color: #ff3232;
-}
-
-.icon-great {
-  background: rgba(164,30,53,0.15);
-  border: 2px solid rgba(164,30,53,0.4);
-  color: #ff6b8a;
-}
-
-.result-title {
-  font-size: 42px;
-  font-weight: 900;
-  margin-bottom: 12px;
-  letter-spacing: 2px;
-  text-align: center;
-}
-
-.text-red {
-  background: linear-gradient(135deg, #ff3232, #ff6b6b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shake 0.5s ease-in-out;
-}
-
-.text-gold {
-  background: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-10px); }
-  40% { transform: translateX(10px); }
-  60% { transform: translateX(-10px); }
-  80% { transform: translateX(10px); }
-}
-
-.result-msg {
-  font-size: 15px;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 35px;
-  font-weight: 300;
-  text-align: center;
-  max-width: 400px;
-  line-height: 1.6;
-}
-
-.players-section {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.players-label {
-  font-size: 11px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
-  margin-bottom: 20px;
-}
-
-.players-grid {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-  max-width: 500px;
-}
-
-.player-card {
-  width: 90px;
-  text-align: center;
-}
-
-.player-img {
-  width: 75px;
-  height: 75px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(164,30,53,0.4);
-  margin-bottom: 6px;
-  background: rgba(255,255,255,0.05);
-}
-
-.player-name {
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-  font-weight: 600;
-}
-
-.player-pos {
-  font-size: 9px;
-  color: rgba(255,255,255,0.25);
-  letter-spacing: 1px;
-}
-
-.btn-again {
-  padding: 14px 40px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.5);
-  border-radius: 50px;
-  font-family: 'Poppins', Arial, sans-serif;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 2px;
-}
-
-.btn-again:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.3);
-  color: white;
-  transform: translateY(-2px);
-}
-
-/* Particles */
-.particles {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
+  transition: all 0.2s ease;
+  position: relative;
   overflow: hidden;
 }
 
-.particle {
-  position: absolute;
-  width: 3px; height: 3px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-  animation: float-up linear infinite;
+.btn:active {
+  transform: scale(0.97);
 }
 
-@keyframes float-up {
-  0% { transform: translateY(100vh) scale(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+.btn-gold {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+  box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+}
+
+.btn-gold:active {
+  box-shadow: 0 2px 12px rgba(245,158,11,0.4);
+}
+
+.btn-gold::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,0.05);
+  color: #71717a;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ===== SCREEN 2 - POOR ===== */
+.poor-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.poor-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.poor-text {
+  font-size: 15px;
+  color: #71717a;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 40px;
+  max-width: 300px;
+}
+
+/* ===== SCREEN 3 - CLICKER ===== */
+#screen3 {
+  justify-content: flex-start;
+  padding-top: 0;
+}
+
+.top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px;
+  margin-bottom: 20px;
+}
+
+.top-label {
+  font-size: 13px;
+  color: #71717a;
+  font-weight: 500;
+}
+
+.balance-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 10px 18px;
+}
+
+.balance-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34,197,94,0.5);
+}
+
+.balance-amount {
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.clicker-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.click-label {
+  font-size: 14px;
+  color: #52525b;
+  font-weight: 500;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.coin-btn {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  background: linear-gradient(145deg, #fbbf24, #d97706);
+  box-shadow: 0 8px 40px rgba(245,158,11,0.3), 0 0 80px rgba(245,158,11,0.1), inset 0 -4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.coin-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 4px 20px rgba(245,158,11,0.4), inset 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.coin-inner {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.6);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.click-counter {
+  margin-top: 24px;
+  font-size: 13px;
+  color: #3f3f46;
+  font-weight: 500;
+}
+
+.click-counter b {
+  color: #71717a;
+}
+
+.milestone-msg {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f59e0b;
+  text-align: center;
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Float +$100 */
+.float-text {
+  position: absolute;
+  font-size: 20px;
+  font-weight: 800;
+  color: #22c55e;
+  pointer-events: none;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 10;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-120px) scale(0.7); }
 }
 
 /* Confetti */
 .confetti-piece {
-  position: absolute;
-  width: 8px; height: 12px;
-  border-radius: 2px;
-  animation: confetti-fall 3s ease-out forwards;
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  z-index: 100;
+  pointer-events: none;
 }
 
-@keyframes confetti-fall {
-  0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
   100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Bottom stats */
+.bottom-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #52525b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* ===== SCREEN 4 - MILESTONE ===== */
+.milestone-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.milestone-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.milestone-text {
+  font-size: 15px;
+  color: #a1a1aa;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 14px;
+  padding: 14px 32px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:active {
+  background: rgba(245,158,11,0.1);
+  transform: scale(0.97);
 }
 </style>
 </head>
 <body>
 
-<!-- Screen 1: Entry -->
-<div id="screen1" class="screen active" onclick="goTo('screen2')">
-  <div class="particles" id="particles1"></div>
-  <div class="football-icon">&#9917;</div>
-  <div class="entry-title">Football Team Quiz</div>
-  <div class="entry-sub">Which team do you support?</div>
-  <div class="click-hint">TAP ANYWHERE TO ENTER</div>
-</div>
+<div class="bg-glow glow1"></div>
+<div class="bg-glow glow2"></div>
 
-<!-- Screen 2: Team Selection -->
-<div id="screen2" class="screen">
-  <div class="particles" id="particles2"></div>
-  <div class="hint-box" id="hintBox">
-    <span class="hint-dot"></span>
-    Hint: We know you know it's Barca... come on!
-  </div>
-  <div class="question-text">Which Football Team Do You Support?</div>
-  <div class="question-sub">Choose wisely...</div>
-  <div class="teams-grid">
-    <button class="team-btn btn-barca" onclick="goTo('screenBarca')">
-      <div class="team-logo logo-barca">FC</div>
-      FC Barcelona
-    </button>
-    <button class="team-btn btn-real" onclick="goTo('screenReal')">
-      <div class="team-logo logo-real">RM</div>
-      Real Madrid
-    </button>
-    <button class="team-btn btn-psg" onclick="goTo('screenPSG')">
-      <div class="team-logo logo-psg">PS</div>
-      PSG
-    </button>
-    <button class="team-btn btn-city" onclick="goTo('screenCity')">
-      <div class="team-logo logo-city">MC</div>
-      Manchester City
-    </button>
-    <button class="team-btn btn-arsenal" onclick="goTo('screenArsenal')">
-      <div class="team-logo logo-arsenal">AR</div>
-      Arsenal
-    </button>
+<!-- SCREEN 1: Welcome -->
+<div class="screen active" id="screen1">
+  <div class="welcome-badge">Limited Time Offer</div>
+  <div class="welcome-icon">$</div>
+  <h1 class="welcome-title">Welcome!<br>You Can Now Win <span>$100</span></h1>
+  <p class="welcome-sub">Tap below to claim your reward<br>or walk away empty-handed.</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="showScreen('screen3')">Give Me The $100!</button>
+    <button class="btn btn-ghost" onclick="showScreen('screen2')">Nah, I'll Stay Poor</button>
   </div>
 </div>
 
-<!-- Result: Barcelona -->
-<div id="screenBarca" class="screen result-screen-barca">
-  <div class="particles" id="particlesBarca"></div>
-  <div class="result-icon icon-great">&#9733;</div>
-  <div class="result-title text-gold">Congratulations!</div>
-  <div class="result-msg">You support the best team in the world. Not only a team, but a family. Mes que un club!</div>
-  <div class="players-section">
-    <div class="players-label">THE LEGENDS</div>
-    <div class="players-grid">
-      <div class="player-card">
-        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/571398-1710080339.jpg" alt="Lamine Yamal">
-        <div class="player-name">Lamine Yamal</div>
-        <div class="player-pos">FORWARD</div>
-      </div>
-      <div class="player-card">
-        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/411295-1694609987.jpg" alt="Raphinha">
-        <div class="player-name">Raphinha</div>
-        <div class="player-pos">FORWARD</div>
-      </div>
-      <div class="player-card">
-        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/38253-1710080469.jpg" alt="Lewandowski">
-        <div class="player-name">Lewandowski</div>
-        <div class="player-pos">STRIKER</div>
-      </div>
-      <div class="player-card">
-        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/901307-1710080519.jpg" alt="Pedri">
-        <div class="player-name">Pedri</div>
-        <div class="player-pos">MIDFIELDER</div>
-      </div>
-      <div class="player-card">
-        <img class="player-img" src="https://img.a.transfermarkt.technology/portrait/big/466794-1710080549.jpg" alt="Gavi">
-        <div class="player-name">Gavi</div>
-        <div class="player-pos">MIDFIELDER</div>
-      </div>
+<!-- SCREEN 2: Poor choice -->
+<div class="screen" id="screen2">
+  <div class="poor-icon">:(</div>
+  <h2 class="poor-title">Seriously?!</h2>
+  <p class="poor-text">You just turned down free money. That's a bold strategy. Let's see if it pays off... (it won't)</p>
+  <div class="btn-group">
+    <button class="btn btn-gold" onclick="showScreen('screen1')">Wait, Take Me Back!</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: Clicker -->
+<div class="screen" id="screen3">
+  <div class="top-bar">
+    <span class="top-label">Your Wallet</span>
+    <div class="balance-box">
+      <div class="balance-dot"></div>
+      <span class="balance-amount" id="balanceDisplay">$0</span>
     </div>
   </div>
-  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
-</div>
 
-<!-- Result: Real Madrid -->
-<div id="screenReal" class="screen result-screen-bad">
-  <div class="result-icon icon-bad">X</div>
-  <div class="result-title text-red">Go Away!</div>
-  <div class="result-msg">Barca is better. You know it, we know it, everyone knows it. Go away!</div>
-  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
-</div>
+  <div class="clicker-area" id="clickerArea">
+    <div class="click-label">Tap The Coin</div>
+    <button class="coin-btn" id="coinBtn" onclick="handleClick(event)">
+      <div class="coin-inner">$</div>
+    </button>
+    <div class="click-counter">Taps: <b id="clickCount">0</b></div>
+    <div class="milestone-msg" id="milestoneMsg"></div>
+  </div>
 
-<!-- Result: PSG -->
-<div id="screenPSG" class="screen result-screen-bad">
-  <div class="result-icon icon-bad">X</div>
-  <div class="result-title text-red">Come On Man...</div>
-  <div class="result-msg">Don't glaze 1 UCL trophy. That's embarrassing. Pick a real team!</div>
-  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
-</div>
-
-<!-- Result: Man City -->
-<div id="screenCity" class="screen result-screen-bad">
-  <div class="result-icon icon-bad">X</div>
-  <div class="result-title text-red">Bruh...</div>
-  <div class="result-msg">You got beaten by Real Madrid... bruh! Oil money can't buy you glory!</div>
-  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
-</div>
-
-<!-- Result: Arsenal -->
-<div id="screenArsenal" class="screen result-screen-bad">
-  <div class="result-icon icon-bad">X</div>
-  <div class="result-title text-red">WTF?!</div>
-  <div class="result-msg">Who even supports this team?! Seriously, what are you doing with your life?!</div>
-  <button class="btn-again" onclick="goTo('screen1')">TRY AGAIN</button>
+  <div class="bottom-stats">
+    <div class="stat-card">
+      <div class="stat-val" id="totalEarned">$0</div>
+      <div class="stat-label">Total Earned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="perClick">$100</div>
+      <div class="stat-label">Per Click</div>
+    </div>
+  </div>
 </div>
 
 <script>
-function goTo(id) {
-  // Hide hint when leaving screen2
-  var hint = document.getElementById('hintBox');
-  hint.classList.remove('show');
+let balance = 0;
+let clicks = 0;
+let milestoneShown = {};
 
-  var screens = document.querySelectorAll('.screen');
-  for (var i = 0; i < screens.length; i++) {
-    screens[i].style.opacity = '0';
-    (function(s) {
-      setTimeout(function() { s.classList.remove('active'); }, 400);
-    })(screens[i]);
-  }
-  setTimeout(function() {
-    var target = document.getElementById(id);
-    target.classList.add('active');
-    setTimeout(function() {
-      target.style.opacity = '1';
-    }, 50);
-
-    // Show hint on screen2
-    if (id === 'screen2') {
-      setTimeout(function() {
-        hint.classList.add('show');
-      }, 600);
-    }
-
-    // Confetti for Barca
-    if (id === 'screenBarca') {
-      launchConfetti('screenBarca');
-    }
-  }, 450);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  setTimeout(() => {
+    document.getElementById(id).classList.add('active');
+  }, 50);
 }
 
-// Floating particles
-function createParticles(containerId) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-  for (var i = 0; i < 20; i++) {
-    var p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.animationDuration = (5 + Math.random() * 10) + 's';
-    p.style.animationDelay = (Math.random() * 10) + 's';
-    p.style.width = (2 + Math.random() * 3) + 'px';
-    p.style.height = p.style.width;
-    container.appendChild(p);
-  }
+function handleClick(e) {
+  clicks++;
+  balance += 100;
+
+  // Update displays
+  document.getElementById('balanceDisplay').textContent = '$' + balance.toLocaleString();
+  document.getElementById('clickCount').textContent = clicks;
+  document.getElementById('totalEarned').textContent = '$' + balance.toLocaleString();
+
+  // Float +$100
+  let floater = document.createElement('div');
+  floater.className = 'float-text';
+  floater.textContent = '+$100';
+  let rect = document.getElementById('coinBtn').getBoundingClientRect();
+  let offsetX = (Math.random() - 0.5) * 80;
+  floater.style.left = (rect.left + rect.width / 2 - 30 + offsetX) + 'px';
+  floater.style.top = (rect.top - 10) + 'px';
+  document.body.appendChild(floater);
+  setTimeout(() => floater.remove(), 1000);
+
+  // Milestone messages
+  let msg = '';
+  if (balance >= 100000) msg = 'You are a millionaire in training!';
+  else if (balance >= 50000) msg = 'Jeff Bezos is watching...';
+  else if (balance >= 25000) msg = 'Bank account overflow incoming!';
+  else if (balance >= 10000) msg = 'You are officially rich!';
+  else if (balance >= 5000) msg = 'Money machine activated!';
+  else if (balance >= 2000) msg = 'Stacking bills like a pro!';
+  else if (balance >= 1000) msg = 'Not bad at all!';
+  else if (balance >= 500) msg = 'Getting warmer...';
+  else if (balance >= 100) msg = 'First $100 earned!';
+
+  document.getElementById('milestoneMsg').textContent = msg;
+
+  // Confetti at milestones
+  let milestones = [1000, 5000, 10000, 25000, 50000, 100000];
+  milestones.forEach(m => {
+    if (balance >= m && !milestoneShown[m]) {
+      milestoneShown[m] = true;
+      launchConfetti();
+    }
+  });
 }
 
-createParticles('particles1');
-createParticles('particles2');
-createParticles('particlesBarca');
-
-function launchConfetti(screenId) {
-  var colors = ['#A41E35','#004D98','#ffd700','#ff6bb5','#6b9fff','#ff9f43'];
-  var screen = document.getElementById(screenId);
-  for (var i = 0; i < 60; i++) {
-    var c = document.createElement('div');
-    c.className = 'confetti-piece';
-    c.style.left = Math.random() * 100 + '%';
-    c.style.top = '-20px';
-    c.style.background = colors[Math.floor(Math.random() * colors.length)];
-    c.style.animationDelay = (Math.random() * 2) + 's';
-    c.style.animationDuration = (2 + Math.random() * 2) + 's';
-    screen.appendChild(c);
-    (function(el) {
-      setTimeout(function() { el.remove(); }, 5000);
-    })(c);
+function launchConfetti() {
+  let colors = ['#f59e0b', '#fbbf24', '#22c55e', '#3b82f6', '#ef4444', '#a855f7'];
+  for (let i = 0; i < 60; i++) {
+    let piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-10px';
+    piece.style.width = (Math.random() * 8 + 4) + 'px';
+    piece.style.height = (Math.random() * 8 + 4) + 'px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animation = 'confettiFall ' + (Math.random() * 2 + 1.5) + 's ease-out forwards';
+    piece.style.animationDelay = Math.random() * 0.5 + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
   }
 }
 </script>
-
 </body>
 </html>
