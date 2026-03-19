@@ -1,430 +1,451 @@
-import { useState, useEffect, useCallback } from "react";
-import { questions, shuffleArray, Question } from "./questions";
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>IQ Testi - Genel Kültür Sınavı</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 50%,rgba(88,28,135,.15),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(15,118,110,.12),transparent 60%),radial-gradient(ellipse at 50% 80%,rgba(30,64,175,.1),transparent 60%);pointer-events:none;z-index:0}
+.container{max-width:800px;margin:0 auto;padding:20px;position:relative;z-index:1}
 
-type GameState = "welcome" | "playing" | "result";
+/* WELCOME */
+#welcome{text-align:center;padding-top:40px}
+#welcome h1{font-size:2.8rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#38bdf8,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+#welcome .subtitle{font-size:1.1rem;color:#94a3b8;margin-bottom:30px}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:30px}
+.cat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 12px;text-align:center;transition:transform .2s,box-shadow .2s}
+.cat-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
+.cat-card .icon{font-size:2.2rem;margin-bottom:8px}
+.cat-card .name{font-weight:700;font-size:.95rem}
+.cat-card .count{font-size:.75rem;color:#64748b;margin-top:4px}
+.rules-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;margin-bottom:28px;text-align:left}
+.rules-box h3{font-size:1rem;color:#a78bfa;margin-bottom:10px}
+.rules-box ul{list-style:none;padding:0}
+.rules-box li{padding:5px 0;font-size:.9rem;color:#94a3b8}
+.rules-box li::before{content:'▸ ';color:#38bdf8}
+.btn{display:inline-block;padding:16px 48px;font-size:1.15rem;font-weight:700;border:none;border-radius:50px;cursor:pointer;transition:all .3s;font-family:inherit}
+.btn-start{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.4)}
+.btn-start:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(124,58,237,.6)}
+.btn-restart{background:linear-gradient(135deg,#059669,#0d9488);color:#fff;box-shadow:0 4px 20px rgba(5,150,105,.4)}
+.btn-restart:hover{transform:scale(1.05)}
 
-const categoryIcons: Record<string, string> = {
-  Biyoloji: "🧬",
-  Coğrafya: "🌍",
-  Matematik: "🔢",
-  Fizik: "⚛️",
-  Ekonomi: "💰",
-  Siyaset: "🏛️",
-};
+/* QUIZ */
+#quiz{display:none;padding-top:30px}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.stat-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 18px;font-size:.85rem;display:flex;align-items:center;gap:6px}
+.stat-box .num{font-weight:700;font-size:1.1rem}
+.hearts{display:flex;gap:4px}
+.heart{width:22px;height:22px;display:inline-block;font-size:18px;transition:all .3s}
+.heart.lost{opacity:.2;transform:scale(.7)}
+.q-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:30px;margin-bottom:20px;position:relative;overflow:hidden}
+.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:18px 18px 0 0}
+.cat-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px}
+.cat-bio{background:rgba(16,185,129,.15);color:#34d399}.cat-bio-bar{background:linear-gradient(90deg,#10b981,#34d399)}
+.cat-geo{background:rgba(59,130,246,.15);color:#60a5fa}.cat-geo-bar{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.cat-mat{background:rgba(245,158,11,.15);color:#fbbf24}.cat-mat-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.cat-fiz{background:rgba(168,85,247,.15);color:#c084fc}.cat-fiz-bar{background:linear-gradient(90deg,#a855f7,#c084fc)}
+.cat-eko{background:rgba(236,72,153,.15);color:#f472b6}.cat-eko-bar{background:linear-gradient(90deg,#ec4899,#f472b6)}
+.cat-siy{background:rgba(239,68,68,.15);color:#f87171}.cat-siy-bar{background:linear-gradient(90deg,#ef4444,#f87171)}
+.q-number{font-size:.8rem;color:#64748b;margin-bottom:8px}
+.q-text{font-size:1.2rem;font-weight:700;line-height:1.5;color:#f1f5f9}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.opt-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all .2s;font-size:.95rem;color:#e2e8f0;font-family:inherit;display:flex;align-items:center;gap:10px}
+.opt-btn:hover:not(.disabled){background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);transform:translateY(-1px)}
+.opt-btn .letter{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.opt-btn.correct{background:rgba(16,185,129,.2);border-color:#10b981}
+.opt-btn.correct .letter{background:#10b981;color:#fff}
+.opt-btn.wrong{background:rgba(239,68,68,.2);border-color:#ef4444;animation:shake .4s}
+.opt-btn.wrong .letter{background:#ef4444;color:#fff}
+.opt-btn.disabled{pointer-events:none;opacity:.6}
+.opt-btn.disabled.correct{opacity:1}
+.feedback-bar{margin-top:16px;padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:600;display:none}
+.feedback-bar.show{display:block}
+.feedback-bar.fb-correct{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.feedback-bar.fb-wrong{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.progress-track{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#38bdf8);border-radius:3px;transition:width .4s}
 
-const categoryColors: Record<string, string> = {
-  Biyoloji: "from-green-500 to-emerald-600",
-  Coğrafya: "from-blue-500 to-cyan-600",
-  Matematik: "from-purple-500 to-violet-600",
-  Fizik: "from-orange-500 to-amber-600",
-  Ekonomi: "from-yellow-500 to-lime-600",
-  Siyaset: "from-red-500 to-rose-600",
-};
+/* RESULT */
+#result{display:none;text-align:center;padding-top:30px}
+#result h2{font-size:2.2rem;font-weight:900;margin-bottom:6px;background:linear-gradient(135deg,#a78bfa,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#result .res-sub{color:#94a3b8;margin-bottom:30px;font-size:1rem}
+.iq-display{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:30px;margin-bottom:24px}
+.iq-score{font-size:4.5rem;font-weight:900;line-height:1}
+.iq-label{font-size:1.1rem;font-weight:700;margin-top:8px}
+.iq-scale{margin-top:20px}
+.iq-scale-bar{width:100%;height:14px;background:linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6);border-radius:7px;position:relative;margin-top:6px}
+.iq-marker{position:absolute;top:-6px;width:4px;height:26px;background:#fff;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.6);transition:left .5s}
+.iq-scale-labels{display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;margin-top:6px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px}
+.stat-card .sv{font-size:2rem;font-weight:900}
+.stat-card .sl{font-size:.8rem;color:#94a3b8;margin-top:4px}
+.cat-breakdown{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;text-align:left;margin-bottom:24px}
+.cat-breakdown h3{font-size:1rem;font-weight:700;margin-bottom:14px;color:#cbd5e1}
+.cb-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cb-icon{font-size:1.3rem;width:30px;text-align:center}
+.cb-name{width:80px;font-size:.85rem;font-weight:600}
+.cb-bar-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.cb-bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.cb-score{font-size:.8rem;color:#94a3b8;width:40px;text-align:right}
+.motivation{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;margin-bottom:28px;font-size:.95rem;color:#94a3b8;line-height:1.6}
 
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .4s ease}
 
-
-function calculateIQ(correct: number, total: number): number {
-  if (total === 0) return 70;
-  const ratio = correct / total;
-  // Map performance to IQ range
-  // 0% -> 70, ~30% -> 85, ~50% -> 100, ~70% -> 115, ~85% -> 130, ~95%+ -> 145+
-  const iq = Math.round(70 + ratio * 80 + (ratio > 0.5 ? (ratio - 0.5) * 30 : 0));
-  return Math.min(160, Math.max(70, iq));
+@media(max-width:600px){
+  #welcome h1{font-size:2rem}
+  .cat-grid{grid-template-columns:repeat(2,1fr)}
+  .options{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr}
+  .q-card{padding:20px}
+  .q-text{font-size:1.05rem}
 }
+</style>
+</head>
+<body>
+<div class="container">
 
-function getIQLabel(iq: number): string {
-  if (iq >= 145) return "Üstün Zeka";
-  if (iq >= 130) return "Çok Üstün";
-  if (iq >= 115) return "Ortanın Üstü";
-  if (iq >= 100) return "Ortalama";
-  if (iq >= 85) return "Ortanın Altı";
-  return "Düşük";
-}
+<!-- WELCOME SCREEN -->
+<div id="welcome">
+  <h1>🧠 IQ Testi</h1>
+  <p class="subtitle">Genel Kültür Sınavı ile Zekânı Ölç!</p>
+  <div class="cat-grid">
+    <div class="cat-card"><div class="icon">🧬</div><div class="name">Biyoloji</div><div class="count">15 Soru</div></div>
+    <div class="cat-card"><div class="icon">🌍</div><div class="name">Coğrafya</div><div class="count">15 Soru</div></div>
+    <div class="cat-card"><div class="icon">🔢</div><div class="name">Matematik</div><div class="count">15 Soru</div></div>
+    <div class="cat-card"><div class="icon">⚛️</div><div class="name">Fizik</div><div class="count">15 Soru</div></div>
+    <div class="cat-card"><div class="icon">💰</div><div class="name">Ekonomi</div><div class="count">15 Soru</div></div>
+    <div class="cat-card"><div class="icon">🏛️</div><div class="name">Siyaset</div><div class="count">15 Soru</div></div>
+  </div>
+  <div class="rules-box">
+    <h3>📋 Kurallar</h3>
+    <ul>
+      <li>6 farklı kategoriden toplam 90 soru sorulur</li>
+      <li>Sorular karışık sırayla gelir</li>
+      <li>Toplam 5 yanlış hakkınız vardır</li>
+      <li>5 yanlışta test sona erer</li>
+      <li>Sonunda doğru cevap sayınıza göre IQ puanınız hesaplanır</li>
+    </ul>
+  </div>
+  <button class="btn btn-start" onclick="startQuiz()">🚀 Teste Başla</button>
+</div>
 
-function getIQColor(iq: number): string {
-  if (iq >= 145) return "text-yellow-400";
-  if (iq >= 130) return "text-green-400";
-  if (iq >= 115) return "text-blue-400";
-  if (iq >= 100) return "text-cyan-400";
-  if (iq >= 85) return "text-orange-400";
-  return "text-red-400";
-}
+<!-- QUIZ SCREEN -->
+<div id="quiz">
+  <div class="top-bar">
+    <div class="stat-box">✅ Doğru: <span class="num" id="correctCount">0</span></div>
+    <div class="stat-box">❌ Yanlış: <span class="num" id="wrongCount">0</span></div>
+    <div class="stat-box hearts" id="hearts"></div>
+  </div>
+  <div class="q-card fade-in" id="qCard">
+    <div id="catBadge" class="cat-badge"></div>
+    <div class="q-number" id="qNumber"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="optionsDiv"></div>
+    <div class="feedback-bar" id="feedbackBar"></div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
 
-function getIQEmoji(iq: number): string {
-  if (iq >= 145) return "🧠✨";
-  if (iq >= 130) return "🌟";
-  if (iq >= 115) return "👏";
-  if (iq >= 100) return "👍";
-  if (iq >= 85) return "💪";
-  return "📚";
-}
-
-function getIQMessage(iq: number): string {
-  if (iq >= 145) return "İnanılmaz! Einstein seviyesinde bir zekaya sahipsiniz!";
-  if (iq >= 130) return "Harika! Çok üstün bir genel kültüre sahipsiniz!";
-  if (iq >= 115) return "Tebrikler! Ortalamanın üstünde bir performans gösterdiniz!";
-  if (iq >= 100) return "İyi iş! Ortalama bir genel kültür seviyeniz var.";
-  if (iq >= 85) return "Fena değil, biraz daha çalışarak gelişebilirsiniz!";
-  return "Daha çok çalışmanız gerekiyor, ama üzülmeyin!";
-}
-
-export default function App() {
-  const [gameState, setGameState] = useState<GameState>("welcome");
-  const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [wrongCount, setWrongCount] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrectFeedback, setIsCorrectFeedback] = useState(false);
-  const [categoryStats, setCategoryStats] = useState<Record<string, { correct: number; total: number }>>({});
-  const [animateIn, setAnimateIn] = useState(false);
-
-  const startGame = useCallback(() => {
-    const shuffled = shuffleArray(questions);
-    setShuffledQuestions(shuffled);
-    setCurrentIndex(0);
-    setCorrectCount(0);
-    setWrongCount(0);
-    setSelectedAnswer(null);
-    setShowFeedback(false);
-    setCategoryStats({});
-    setGameState("playing");
-    setTimeout(() => setAnimateIn(true), 50);
-  }, []);
-
-  const currentQuestion = shuffledQuestions[currentIndex];
-
-  const handleAnswer = (answerIndex: number) => {
-    if (showFeedback) return;
-
-    setSelectedAnswer(answerIndex);
-    setShowFeedback(true);
-
-    const isCorrect = answerIndex === currentQuestion.correctAnswer;
-    setIsCorrectFeedback(isCorrect);
-
-    const cat = currentQuestion.category;
-    setCategoryStats((prev) => ({
-      ...prev,
-      [cat]: {
-        correct: (prev[cat]?.correct || 0) + (isCorrect ? 1 : 0),
-        total: (prev[cat]?.total || 0) + 1,
-      },
-    }));
-
-    if (isCorrect) {
-      setCorrectCount((c) => c + 1);
-    } else {
-      const newWrongCount = wrongCount + 1;
-      setWrongCount(newWrongCount);
-
-      if (newWrongCount >= 5) {
-        setTimeout(() => {
-          setGameState("result");
-        }, 1500);
-        return;
-      }
-    }
-
-    setTimeout(() => {
-      setShowFeedback(false);
-      setSelectedAnswer(null);
-      setAnimateIn(false);
-
-      setTimeout(() => {
-        if (currentIndex + 1 < shuffledQuestions.length) {
-          setCurrentIndex((i) => i + 1);
-        } else {
-          // All questions answered
-          setGameState("result");
-        }
-        setAnimateIn(true);
-      }, 100);
-    }, 1200);
-  };
-
-  useEffect(() => {
-    if (gameState === "welcome") {
-      setAnimateIn(true);
-    }
-  }, [gameState]);
-
-  // Welcome Screen
-  if (gameState === "welcome") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950 flex items-center justify-center p-4">
-        <div className={`max-w-2xl w-full transition-all duration-700 ${animateIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          <div className="text-center mb-10">
-            <div className="text-6xl mb-4">🧠</div>
-            <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent mb-4">
-              IQ Testi
-            </h1>
-            <p className="text-xl text-gray-300 mb-2">Genel Kültür Sınavı</p>
-            <p className="text-gray-500 text-sm">Bilgini test et, IQ seviyeni öğren!</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
-            {Object.entries(categoryIcons).map(([cat, icon]) => (
-              <div
-                key={cat}
-                className={`bg-gradient-to-br ${categoryColors[cat]} bg-opacity-10 rounded-xl p-4 text-center border border-white/10 backdrop-blur-sm`}
-                style={{ background: "rgba(255,255,255,0.05)" }}
-              >
-                <div className="text-3xl mb-2">{icon}</div>
-                <div className="text-white font-semibold text-sm">{cat}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 mb-8">
-            <h2 className="text-white font-bold text-lg mb-3">📋 Nasıl Oynanır?</h2>
-            <ul className="text-gray-300 space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-cyan-400 mt-0.5">▸</span>
-                6 farklı kategoriden sorular sorulacak
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-cyan-400 mt-0.5">▸</span>
-                Her sorunun 4 şıkkı olacak, birini seçin
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-cyan-400 mt-0.5">▸</span>
-                <strong className="text-red-400">5 yanlış</strong> yaptığınızda test sona erecek
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-cyan-400 mt-0.5">▸</span>
-                Sonuçta doğru cevaplarınıza göre IQ puanınız hesaplanacak
-              </li>
-            </ul>
-          </div>
-
-          <div className="text-center">
-            <button
-              onClick={startGame}
-              className="px-12 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xl rounded-2xl shadow-lg shadow-cyan-500/25 hover:shadow-cyan-400/40 transition-all duration-300 hover:scale-105 active:scale-95"
-            >
-              🚀 Teste Başla
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Result Screen
-  if (gameState === "result") {
-    const totalAnswered = correctCount + wrongCount;
-    const iq = calculateIQ(correctCount, totalAnswered);
-    const iqLabel = getIQLabel(iq);
-    const iqColor = getIQColor(iq);
-    const iqEmoji = getIQEmoji(iq);
-    const iqMessage = getIQMessage(iq);
-    const percentage = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full animate-fade-in">
-          {/* IQ Score Card */}
-          <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-8 mb-6 text-center">
-            <div className="text-5xl mb-3">{iqEmoji}</div>
-            <h2 className="text-gray-400 text-lg mb-2 font-medium">Tahmini IQ Puanınız</h2>
-            <div className={`text-8xl font-black ${iqColor} mb-2`}>{iq}</div>
-            <div className={`text-2xl font-bold ${iqColor} mb-4`}>{iqLabel}</div>
-            <p className="text-gray-300 text-lg">{iqMessage}</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 text-center">
-              <div className="text-3xl font-bold text-green-400">{correctCount}</div>
-              <div className="text-gray-400 text-sm">Doğru</div>
-            </div>
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 text-center">
-              <div className="text-3xl font-bold text-red-400">{wrongCount}</div>
-              <div className="text-gray-400 text-sm">Yanlış</div>
-            </div>
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 text-center">
-              <div className="text-3xl font-bold text-cyan-400">%{percentage}</div>
-              <div className="text-gray-400 text-sm">Başarı</div>
-            </div>
-          </div>
-
-          {/* IQ Bar */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 mb-6">
-            <h3 className="text-white font-bold mb-3">📊 IQ Skalası</h3>
-            <div className="relative h-8 bg-gray-800 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 to-cyan-500 rounded-full transition-all duration-1000"
-                style={{ width: `${Math.min(100, ((iq - 70) / 90) * 100)}%` }}
-              />
-              <div
-                className="absolute top-0 h-full w-1 bg-white shadow-lg shadow-white/50"
-                style={{ left: `${Math.min(99, ((iq - 70) / 90) * 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>70</span>
-              <span>85</span>
-              <span>100</span>
-              <span>115</span>
-              <span>130</span>
-              <span>145+</span>
-            </div>
-          </div>
-
-          {/* Category Breakdown */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 mb-8">
-            <h3 className="text-white font-bold mb-4">📁 Kategori Bazında Sonuçlar</h3>
-            <div className="space-y-3">
-              {Object.entries(categoryIcons).map(([cat, icon]) => {
-                const stat = categoryStats[cat] || { correct: 0, total: 0 };
-                const pct = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
-                return (
-                  <div key={cat} className="flex items-center gap-3">
-                    <span className="text-xl w-8">{icon}</span>
-                    <span className="text-gray-300 w-24 text-sm font-medium">{cat}</span>
-                    <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${categoryColors[cat]} rounded-full transition-all duration-700`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="text-gray-400 text-sm w-20 text-right">
-                      {stat.correct}/{stat.total} ({pct}%)
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="text-center">
-            <button
-              onClick={() => {
-                setGameState("welcome");
-                setAnimateIn(false);
-                setTimeout(() => setAnimateIn(true), 50);
-              }}
-              className="px-10 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-lg rounded-2xl shadow-lg shadow-cyan-500/25 hover:shadow-cyan-400/40 transition-all duration-300 hover:scale-105 active:scale-95"
-            >
-              🔄 Tekrar Dene
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Playing Screen
-  if (!currentQuestion) return null;
-
-  const totalAnswered = correctCount + wrongCount;
-  const progressPercentage = totalAnswered > 0 ? (correctCount / totalAnswered) * 100 : 0;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950 flex flex-col p-4">
-      {/* Top Bar */}
-      <div className="max-w-2xl w-full mx-auto mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-white font-bold text-lg">Soru {totalAnswered + 1}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <span className="text-green-400 font-bold text-lg">✓ {correctCount}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
-                    i < wrongCount
-                      ? "bg-red-500 border-red-500 shadow-lg shadow-red-500/50"
-                      : "border-gray-600 bg-transparent"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Success bar */}
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-green-400 to-cyan-400 rounded-full transition-all duration-500"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Question Card */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className={`max-w-2xl w-full transition-all duration-500 ${animateIn ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}`}>
-          {/* Category Badge */}
-          <div className="flex justify-center mb-4">
-            <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${categoryColors[currentQuestion.category]} text-white font-semibold text-sm shadow-lg`}
-            >
-              <span className="text-lg">{categoryIcons[currentQuestion.category]}</span>
-              {currentQuestion.category}
-            </div>
-          </div>
-
-          {/* Question */}
-          <div className={`bg-white/5 backdrop-blur-md rounded-3xl border ${showFeedback ? (isCorrectFeedback ? "border-green-500/50" : "border-red-500/50") : "border-white/10"} p-8 mb-6 transition-all duration-300`}>
-            <h2 className="text-2xl md:text-3xl font-bold text-white text-center leading-relaxed">
-              {currentQuestion.question}
-            </h2>
-          </div>
-
-          {/* Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {currentQuestion.options.map((option, index) => {
-              let btnClasses = "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white";
-
-              if (showFeedback) {
-                if (index === currentQuestion.correctAnswer) {
-                  btnClasses = "bg-green-500/20 border-green-500 text-green-300 shadow-lg shadow-green-500/20";
-                } else if (index === selectedAnswer && index !== currentQuestion.correctAnswer) {
-                  btnClasses = "bg-red-500/20 border-red-500 text-red-300 shadow-lg shadow-red-500/20 animate-shake";
-                } else {
-                  btnClasses = "bg-white/5 border-white/5 text-gray-600";
-                }
-              }
-
-              const letters = ["A", "B", "C", "D"];
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(index)}
-                  disabled={showFeedback}
-                  className={`flex items-center gap-3 p-4 rounded-2xl border-2 font-medium text-left transition-all duration-300 ${btnClasses} ${!showFeedback ? "active:scale-95 cursor-pointer" : "cursor-default"}`}
-                >
-                  <span className={`flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold shrink-0 ${
-                    showFeedback && index === currentQuestion.correctAnswer
-                      ? "bg-green-500 text-white"
-                      : showFeedback && index === selectedAnswer && index !== currentQuestion.correctAnswer
-                      ? "bg-red-500 text-white"
-                      : "bg-white/10 text-gray-300"
-                  }`}>
-                    {showFeedback && index === currentQuestion.correctAnswer ? "✓" : showFeedback && index === selectedAnswer && index !== currentQuestion.correctAnswer ? "✗" : letters[index]}
-                  </span>
-                  <span className="text-base md:text-lg">{option}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Feedback text */}
-          {showFeedback && (
-            <div className={`mt-5 text-center text-lg font-bold ${isCorrectFeedback ? "text-green-400" : "text-red-400"} animate-bounce-in`}>
-              {isCorrectFeedback ? "✅ Doğru Cevap!" : `❌ Yanlış! Doğru cevap: ${currentQuestion.options[currentQuestion.correctAnswer]}`}
-            </div>
-          )}
-        </div>
-      </div>
+<!-- RESULT SCREEN -->
+<div id="result">
+  <h2>📊 Sonuçların</h2>
+  <p class="res-sub">Testi tamamladın! İşte performansın:</p>
+  <div class="iq-display">
+    <div class="iq-score" id="iqScore"></div>
+    <div class="iq-label" id="iqLabel"></div>
+    <div class="iq-scale">
+      <div class="iq-scale-bar"><div class="iq-marker" id="iqMarker"></div></div>
+      <div class="iq-scale-labels"><span>70</span><span>85</span><span>100</span><span>115</span><span>130</span><span>145</span><span>160</span></div>
     </div>
-  );
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="sv" id="rCorrect" style="color:#34d399"></div><div class="sl">Doğru</div></div>
+    <div class="stat-card"><div class="sv" id="rWrong" style="color:#f87171"></div><div class="sl">Yanlış</div></div>
+    <div class="stat-card"><div class="sv" id="rPercent" style="color:#60a5fa"></div><div class="sl">Başarı</div></div>
+  </div>
+  <div class="cat-breakdown" id="catBreakdown">
+    <h3>📂 Kategori Analizi</h3>
+  </div>
+  <div class="motivation" id="motivation"></div>
+  <button class="btn btn-restart" onclick="restartQuiz()">🔄 Tekrar Dene</button>
+</div>
+
+</div>
+
+<script>
+const questions=[
+// BİYOLOJİ
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"DNA'nın açılımı nedir?",o:["Deoksiribonükleik Asit","Diribonükleik Asit","Deoksiribonitik Asit","Disribonükleik Asit"],a:0},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"İnsan vücudundaki en büyük organ hangisidir?",o:["Karaciğer","Beyin","Deri","Akciğer"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Fotosentez sırasında hangi gaz açığa çıkar?",o:["Karbondioksit","Azot","Oksijen","Hidrojen"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Hücrenin enerji santrali olarak bilinen organel hangisidir?",o:["Ribozom","Mitokondri","Golgi Cisimciği","Lizozom"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"İnsan vücudunda kaç çift kromozom bulunur?",o:["22","24","23","21"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Kanın pıhtılaşmasını sağlayan hücreler hangisidir?",o:["Alyuvarlar","Trombositler","Akyuvarlar","Plazma"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Hangi vitamin kemik sağlığı için en önemlidir?",o:["A Vitamini","C Vitamini","D Vitamini","B12 Vitamini"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Genetik bilginin taşınmasında görev alan molekül hangisidir?",o:["Protein","Yağ","RNA","Karbonhidrat"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"İnsan vücudundaki en küçük kemik hangisidir?",o:["Çekiç","Üzengi","Örs","Kaval"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Bitkilerde su ve mineral taşıyan doku hangisidir?",o:["Floem","Ksilem","Parankima","Sklerankima"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"İnsanda sindirim sistemi yaklaşık kaç metre uzunluğundadır?",o:["5 metre","9 metre","3 metre","15 metre"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Aşağıdakilerden hangisi bir sürüngen değildir?",o:["Timsah","Kaplumbağa","Semender","Yılan"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Alyuvarların (eritrosit) görevi nedir?",o:["Bağışıklık","Oksijen taşımak","Sindirim","Pıhtılaşma"],a:1},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Evrim teorisini ortaya atan bilim insanı kimdir?",o:["Newton","Einstein","Darwin","Mendel"],a:2},
+{cat:"bio",icon:"🧬",name:"Biyoloji",q:"Hangi organ safra üretir?",o:["Pankreas","Böbrek","Karaciğer","Dalak"],a:2},
+
+// COĞRAFYA
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Dünyanın en uzun nehri hangisidir?",o:["Amazon","Nil","Mississippi","Yangtze"],a:1},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Türkiye'nin en yüksek dağı hangisidir?",o:["Kaçkar","Erciyes","Süphan","Ağrı"],a:3},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Hangi kıta yüzölçümü bakımından en büyüktür?",o:["Afrika","Avrupa","Asya","Kuzey Amerika"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"İstanbul Boğazı hangi iki denizi birbirine bağlar?",o:["Ege - Akdeniz","Karadeniz - Marmara","Marmara - Ege","Karadeniz - Akdeniz"],a:1},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Avustralya'nın başkenti neresidir?",o:["Sydney","Melbourne","Canberra","Brisbane"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Dünyanın en büyük çölü hangisidir?",o:["Gobi","Sahra","Atacama","Kalahari"],a:1},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Türkiye'nin en uzun nehri hangisidir?",o:["Fırat","Dicle","Kızılırmak","Sakarya"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Hangi ülke hem Avrupa hem Asya kıtasında yer alır?",o:["Yunanistan","İran","Türkiye","Mısır"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Dünyanın en derin gölü hangisidir?",o:["Hazar","Victoria","Baykal","Titicaca"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Japonya'nın başkenti neresidir?",o:["Osaka","Kyoto","Tokyo","Nagoya"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Türkiye kaç coğrafi bölgeye ayrılır?",o:["5","6","7","8"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Everest Dağı hangi iki ülke sınırında yer alır?",o:["Hindistan - Çin","Nepal - Çin","Nepal - Hindistan","Pakistan - Çin"],a:1},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Van Gölü hangi bölgededir?",o:["Güneydoğu Anadolu","İç Anadolu","Doğu Anadolu","Karadeniz"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Kanada'nın başkenti neresidir?",o:["Toronto","Vancouver","Ottawa","Montreal"],a:2},
+{cat:"geo",icon:"🌍",name:"Coğrafya",q:"Amazon Ormanları büyük bölümüyle hangi ülkededir?",o:["Kolombiya","Peru","Brezilya","Venezuela"],a:2},
+
+// MATEMATİK
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Pi sayısının ilk dört basamağı nedir?",o:["3.1415","3.1514","3.1451","3.1145"],a:0},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Bir üçgenin iç açıları toplamı kaç derecedir?",o:["360","180","270","90"],a:1},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"5! (5 faktöriyel) kaçtır?",o:["25","60","120","720"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Bir dairenin çevresi nasıl hesaplanır?",o:["πr²","2πr","πd²","r²/π"],a:1},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"√144 kaçtır?",o:["11","13","14","12"],a:3},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Asal sayı olmayan tek sayı hangisidir?",o:["2","9","7","11"],a:1},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Bir kübün kaç yüzeyi vardır?",o:["4","8","6","12"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"log₁₀(1000) kaçtır?",o:["2","4","10","3"],a:3},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"0.25 kesir olarak nasıl yazılır?",o:["1/5","1/3","1/2","1/4"],a:3},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"İki paralel doğruyu bir doğru keserse oluşan ters açılar nasıldır?",o:["Tamamlayıcı","Bütünler","Eşit","Dik"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"2⁸ kaçtır?",o:["128","512","256","64"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Bir dikdörtgenin alanı nasıl hesaplanır?",o:["a+b","2(a+b)","a×b","a²+b²"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Fibonacci dizisinde 1, 1, 2, 3, 5'ten sonra gelen sayı kaçtır?",o:["7","9","8","6"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Mutlak değer |-7| kaçtır?",o:["-7","0","7","49"],a:2},
+{cat:"mat",icon:"🔢",name:"Matematik",q:"Bir doğru açı kaç derecedir?",o:["180","45","60","90"],a:3},
+
+// FİZİK
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Işığın boşluktaki hızı yaklaşık kaç km/s'dir?",o:["150.000","300.000","450.000","600.000"],a:1},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Newton'un 2. hareket yasası hangisidir?",o:["F = ma","E = mc²","F = G(m₁m₂/r²)","P = mv"],a:0},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Ses hangi ortamda en hızlı yayılır?",o:["Boşluk","Hava","Su","Katı"],a:3},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Elektrik akımının birimi nedir?",o:["Volt","Ohm","Amper","Watt"],a:2},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Atomun çekirdeğinde hangi parçacıklar bulunur?",o:["Elektron ve nötron","Proton ve elektron","Proton ve nötron","Sadece proton"],a:2},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Yerçekimi ivmesi yaklaşık kaç m/s²'dir?",o:["8.1","9.8","10.2","11.5"],a:1},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Enerji birimi hangisidir?",o:["Newton","Pascal","Joule","Hertz"],a:2},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Termodinamiğin 1. yasası neyi ifade eder?",o:["Entropi artar","Enerji korunur","Mutlak sıfır","Isı iletimi"],a:1},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Hangi renk ışığın dalga boyu en kısadır?",o:["Kırmızı","Yeşil","Mor","Sarı"],a:2},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Basınç birimi hangisidir?",o:["Joule","Newton","Watt","Pascal"],a:3},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Bir cismin kütlesi ile hızının çarpımına ne denir?",o:["Enerji","Kuvvet","İvme","Momentum"],a:3},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Suyun kaynama noktası deniz seviyesinde kaç °C'dir?",o:["90","95","100","110"],a:2},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Elektromanyetik dalgalar arasında hangisi en yüksek enerjiye sahiptir?",o:["Radyo dalgaları","Kızılötesi","Ultraviyole","Gama ışınları"],a:3},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Ohm Yasası'na göre V = ?",o:["I / R","I × R","R / I","I + R"],a:1},
+{cat:"fiz",icon:"⚛️",name:"Fizik",q:"Frekans birimi hangisidir?",o:["Pascal","Hertz","Joule","Candela"],a:1},
+
+// EKONOMİ
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Enflasyon ne anlama gelir?",o:["Para değer kazanır","İşsizlik artar","Fiyatlar genel düzeyinin artması","İhracat düşer"],a:2},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"GSYH neyin kısaltmasıdır?",o:["Gayri Safi Yurt Dışı Hasıla","Genel Sanayi Yıllık Hedefi","Gayri Safi Yurtiçi Hasıla","Güçlü Sanayi Yüksek Hacim"],a:2},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Arz ve talep dengesi neyi belirler?",o:["Vergi oranını","Piyasa fiyatını","Faiz oranını","İşsizlik oranını"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Merkez Bankası'nın temel görevi nedir?",o:["Vergi toplamak","Bütçe yapmak","Para politikası yürütmek","İhracat yapmak"],a:2},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Deflasyon ne demektir?",o:["Fiyatların artması","Fiyatların düşmesi","İşsizliğin artması","Üretimin artması"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Monopol piyasa ne anlama gelir?",o:["Çok alıcı çok satıcı","Tek satıcı","Tek alıcı","İki satıcı"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Adam Smith hangi eseriyle tanınır?",o:["Kapital","Ulusların Zenginliği","Genel Teori","Prens"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Döviz kuru neyi ifade eder?",o:["Altın fiyatı","Bir ülke parasının diğerine oranı","Faiz oranı","Enflasyon oranı"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Türkiye'nin para birimi nedir?",o:["Lira","Dolar","Euro","Dinar"],a:0},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"KDV neyin kısaltmasıdır?",o:["Kurumlar Değer Vergisi","Katma Değer Vergisi","Kâr Dağıtım Vergisi","Kazanç Düzenleme Vergisi"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Faiz oranı yükselirse genellikle ne olur?",o:["Tüketim artar","Yatırım artar","Borçlanma azalır","İhracat artar"],a:2},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Borsada hisse senedi ne anlama gelir?",o:["Borç senedi","Şirket ortaklık payı","Devlet tahvili","Vadeli mevduat"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Cari açık ne demektir?",o:["Bütçe fazlası","İhracat fazlası","İthalatın ihracattan fazla olması","Tasarruf fazlası"],a:2},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Keynesyen ekonomi neyi savunur?",o:["Serbest piyasa","Devlet müdahalesi","Altın standardı","Sıfır vergi"],a:1},
+{cat:"eko",icon:"💰",name:"Ekonomi",q:"Stagflasyon ne demektir?",o:["Hızlı büyüme","Durgunluk + enflasyon","Deflasyon + büyüme","Düşük işsizlik"],a:1},
+
+// SİYASET
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye Cumhuriyeti hangi yıl ilan edildi?",o:["1920","1921","1923","1925"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye Cumhuriyeti'nin kurucusu kimdir?",o:["İsmet İnönü","Mustafa Kemal Atatürk","Celal Bayar","Fevzi Çakmak"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Birleşmiş Milletler hangi yıl kuruldu?",o:["1942","1945","1948","1950"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"NATO'nun açılımı nedir?",o:["Kuzey Amerika Ticaret Örgütü","Kuzey Atlantik Antlaşması Örgütü","Ulusal Terörle Mücadele Birliği","Nükleer Silah Antlaşması Örgütü"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Demokrasi kelimesi hangi dilden gelir?",o:["Latince","Arapça","Yunanca","Farsça"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye'de kadınlara seçme ve seçilme hakkı hangi yıl verildi?",o:["1923","1930","1934","1938"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"İnsan Hakları Evrensel Beyannamesi hangi yıl kabul edildi?",o:["1945","1948","1950","1955"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye Büyük Millet Meclisi (TBMM) hangi yıl açıldı?",o:["1919","1920","1921","1923"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Laiklik ilkesi ne anlama gelir?",o:["Askeri yönetim","Din ve devlet işlerinin ayrılması","Tek partili sistem","Monarşi"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Avrupa Birliği'nin merkezi nerededir?",o:["Paris","Berlin","Brüksel","Amsterdam"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Kuvvetler ayrılığı ilkesini ortaya atan düşünür kimdir?",o:["Rousseau","Montesquieu","Locke","Hobbes"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye çok partili hayata ne zaman geçti?",o:["1923","1938","1946","1950"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"BM Güvenlik Konseyi'nin kaç daimi üyesi vardır?",o:["3","4","5","6"],a:2},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Magna Carta hangi yıl imzalanmıştır?",o:["1066","1215","1453","1789"],a:1},
+{cat:"siy",icon:"🏛️",name:"Siyaset",q:"Türkiye NATO'ya hangi yıl katıldı?",o:["1949","1950","1952","1955"],a:2}
+];
+
+const catMeta={
+  bio:{badge:"cat-bio",bar:"cat-bio-bar",icon:"🧬",name:"Biyoloji"},
+  geo:{badge:"cat-geo",bar:"cat-geo-bar",icon:"🌍",name:"Coğrafya"},
+  mat:{badge:"cat-mat",bar:"cat-mat-bar",icon:"🔢",name:"Matematik"},
+  fiz:{badge:"cat-fiz",bar:"cat-fiz-bar",icon:"⚛️",name:"Fizik"},
+  eko:{badge:"cat-eko",bar:"cat-eko-bar",icon:"💰",name:"Ekonomi"},
+  siy:{badge:"cat-siy",bar:"cat-siy-bar",icon:"🏛️",name:"Siyaset"}
+};
+
+let shuffled=[], currentIdx=0, correct=0, wrong=0, answered=false;
+let catStats={bio:{c:0,t:0},geo:{c:0,t:0},mat:{c:0,t:0},fiz:{c:0,t:0},eko:{c:0,t:0},siy:{c:0,t:0}};
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function startQuiz(){
+  shuffled=shuffle([...questions]);
+  currentIdx=0;correct=0;wrong=0;answered=false;
+  catStats={bio:{c:0,t:0},geo:{c:0,t:0},mat:{c:0,t:0},fiz:{c:0,t:0},eko:{c:0,t:0},siy:{c:0,t:0}};
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('result').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  updateUI();
+  renderQuestion();
 }
+
+function restartQuiz(){startQuiz()}
+
+function updateUI(){
+  document.getElementById('correctCount').textContent=correct;
+  document.getElementById('wrongCount').textContent=wrong;
+  let h='';for(let i=0;i<5;i++) h+='<span class="heart'+(i<5-wrong?'':' lost')+'">❤️</span>';
+  document.getElementById('hearts').innerHTML=h;
+  const pct=shuffled.length>0?((currentIdx)/shuffled.length)*100:0;
+  document.getElementById('progressFill').style.width=pct+'%';
+}
+
+function renderQuestion(){
+  if(currentIdx>=shuffled.length||wrong>=5){showResult();return}
+  answered=false;
+  const qObj=shuffled[currentIdx];
+  const meta=catMeta[qObj.cat];
+  document.getElementById('catBadge').className='cat-badge '+meta.badge;
+  document.getElementById('catBadge').textContent=meta.icon+' '+meta.name;
+  document.getElementById('qNumber').textContent='Soru '+(currentIdx+1)+' / '+shuffled.length;
+  document.getElementById('qText').textContent=qObj.q;
+  const letters=['A','B','C','D'];
+  let html='';
+  for(let i=0;i<qObj.o.length;i++){
+    html+='<button class="opt-btn" onclick="selectAnswer('+i+')"><span class="letter">'+letters[i]+'</span><span>'+qObj.o[i]+'</span></button>';
+  }
+  document.getElementById('optionsDiv').innerHTML=html;
+  document.getElementById('feedbackBar').className='feedback-bar';
+  document.getElementById('feedbackBar').textContent='';
+  const card=document.getElementById('qCard');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+function selectAnswer(idx){
+  if(answered)return;
+  answered=true;
+  const qObj=shuffled[currentIdx];
+  const btns=document.querySelectorAll('.opt-btn');
+  const fb=document.getElementById('feedbackBar');
+
+  catStats[qObj.cat].t++;
+
+  btns.forEach((b,i)=>{
+    b.classList.add('disabled');
+    if(i===qObj.a) b.classList.add('correct');
+    if(i===idx&&idx!==qObj.a) b.classList.add('wrong');
+  });
+
+  if(idx===qObj.a){
+    correct++;
+    catStats[qObj.cat].c++;
+    fb.className='feedback-bar show fb-correct';
+    fb.textContent='✅ Doğru! Harika!';
+  } else {
+    wrong++;
+    fb.className='feedback-bar show fb-wrong';
+    fb.textContent='❌ Yanlış! Doğru cevap: '+qObj.o[qObj.a];
+  }
+
+  updateUI();
+  currentIdx++;
+  setTimeout(()=>{
+    if(wrong>=5||currentIdx>=shuffled.length){showResult()}
+    else{renderQuestion()}
+  },1500);
+}
+
+function calcIQ(){
+  const total=correct+wrong;
+  if(total===0)return 100;
+  const ratio=correct/total;
+  const iq=Math.round(70+ratio*90);
+  return Math.min(160,Math.max(70,iq));
+}
+
+function getIQLabel(iq){
+  if(iq>=145)return{t:'Dahi Seviyesi 🌟',c:'#a78bfa'};
+  if(iq>=130)return{t:'Üstün Zekâ 🧠',c:'#38bdf8'};
+  if(iq>=115)return{t:'Ortanın Üstü 💡',c:'#34d399'};
+  if(iq>=100)return{t:'Ortalama Zekâ 👍',c:'#fbbf24'};
+  if(iq>=85)return{t:'Ortanın Altı 📚',c:'#fb923c'};
+  return{t:'Gelişime Açık 💪',c:'#f87171'};
+}
+
+function getMotivation(iq){
+  if(iq>=145)return'🌟 İnanılmaz! Dahi seviyesinde bir zekâya sahipsin. Bilgi birikimin son derece etkileyici. Seni tebrik ediyoruz!';
+  if(iq>=130)return'🧠 Muhteşem! Üstün bir zekâ performansı sergiyledin. Pek çok alanda derin bilgiye sahipsin.';
+  if(iq>=115)return'💡 Harika! Ortalamanın üzerinde bir performans gösterdin. Bilgi birikimin oldukça güçlü!';
+  if(iq>=100)return'👍 İyi iş! Ortalama bir zekâ performansı sergiyledin. Biraz daha çalışarak daha da ilerleyebilirsin!';
+  if(iq>=85)return'📚 Fena değil! Bazı alanlarda biraz daha çalışman gerekiyor. Kitap okuyarak kendini geliştirebilirsin!';
+  return'💪 Vazgeçme! Her gün yeni bir şey öğrenerek zekânı geliştirebilirsin. Tekrar dene!';
+}
+
+function showResult(){
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('result').style.display='block';
+
+  const iq=calcIQ();
+  const label=getIQLabel(iq);
+  const total=correct+wrong;
+  const pct=total>0?Math.round((correct/total)*100):0;
+
+  document.getElementById('iqScore').textContent=iq;
+  document.getElementById('iqScore').style.color=label.c;
+  document.getElementById('iqLabel').textContent=label.t;
+  document.getElementById('iqLabel').style.color=label.c;
+
+  const markerPos=((iq-70)/(160-70))*100;
+  document.getElementById('iqMarker').style.left='calc('+markerPos+'% - 2px)';
+
+  document.getElementById('rCorrect').textContent=correct;
+  document.getElementById('rWrong').textContent=wrong;
+  document.getElementById('rPercent').textContent='%'+pct;
+
+  // Category breakdown
+  const cbd=document.getElementById('catBreakdown');
+  let cbHtml='<h3>📂 Kategori Analizi</h3>';
+  for(const key of['bio','geo','mat','fiz','eko','siy']){
+    const m=catMeta[key];
+    const s=catStats[key];
+    const p=s.t>0?Math.round((s.c/s.t)*100):0;
+    cbHtml+='<div class="cb-row">'
+      +'<span class="cb-icon">'+m.icon+'</span>'
+      +'<span class="cb-name">'+m.name+'</span>'
+      +'<div class="cb-bar-track"><div class="cb-bar-fill '+m.bar+'" style="width:'+p+'%"></div></div>'
+      +'<span class="cb-score">'+s.c+'/'+s.t+'</span>'
+      +'</div>';
+  }
+  cbd.innerHTML=cbHtml;
+
+  document.getElementById('motivation').textContent=getMotivation(iq);
+
+  document.getElementById('result').classList.remove('fade-in');
+  void document.getElementById('result').offsetWidth;
+  document.getElementById('result').classList.add('fade-in');
+}
+</script>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
